@@ -6,6 +6,7 @@ __pycache__/
 # Virtual environment
 venv/
 .env/
+.env
 
 # dotenv local overrides
 .env.*      # por ex. .env.dev, .env.local
