@@ -16,3 +16,18 @@ def getPlayerSummary(steamid: str) -> dict:
     data = resp.json().get("response", {})
     players = data.get("players", [])
     return players[0] if players else {}
+
+def getOwnedGames(steamid: str) -> dict:
+
+    url = f"{BASE_URL}/IPlayerService/GetOwnedGames/v1"
+    params = {
+        "key": STEAM_API_KEY,
+        "steamid": steamid,
+        "include_appinfo": True,
+        "include_played_free_games": True,
+        "appsids_filter": None
+    }
+
+    resp = requests.get(url, params=params)
+    resp.raise_for_status()
+    return resp.json().get("response", {})
