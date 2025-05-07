@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env/
+
+# dotenv local overrides
+.env.*      # por ex. .env.dev, .env.local
+
+# Editor folders
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# MyPy
+.mypy_cache/
+
+# Pylint
+pylint.log
+
+# Database files
+*.sqlite3
+*.db
+
+# Uvicorn reload files
+reload/
+
+# Static build / packaging
+build/
+dist/
+*.egg-info/
+
+# OS files
+.DS_Store
+Thumbs.db
