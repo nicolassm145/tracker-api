@@ -4,4 +4,5 @@ import os
 load_dotenv()
 
 STEAM_API_KEY = os.getenv("STEAM_API_KEY")
-DEBUG = os.getenv("DEBUG") == "True"
+
+XBOX_API_KEY = os.getenv("XBOX_API_KEY")

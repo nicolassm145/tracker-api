@@ -13,6 +13,6 @@ def getPlayerSummary(steamid: str) -> dict:
 
     resp = requests.get(url, params=params)
     resp.raise_for_status()
-    data = resp.json().get("response", {})
-    players = data.get("players", [])
-    return players[0] if players else {}
+    return resp.json().get("response", {})
+    # players = data.get("players", [])
+    # return players[0] if players else {}
