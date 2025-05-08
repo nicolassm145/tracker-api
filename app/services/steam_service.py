@@ -31,3 +31,6 @@ def getOwnedGames(steamid: str) -> dict:
     resp = requests.get(url, params=params)
     resp.raise_for_status()
     return resp.json().get("response", {})
+    # return resp.json().get("response", {})
+    # # players = data.get("players", [])
+    # # return players[0] if players else {}
