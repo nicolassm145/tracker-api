@@ -1,28 +1,103 @@
+from fastapi import HTTPException
 import requests
+from datetime import datetime, timedelta
 from app.config import IGDB_CLIENT_ID, IGDB_ACCESS_TOKEN
-import os
+url = "https://api.igdb.com/v4"
+headers = {
+    "Client-ID": IGDB_CLIENT_ID,
+    "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}"
+}
 
 def get_trending_games() -> list:
-    url = "https://api.igdb.com/v4/games"
-    headers = {
-        "Client-ID": IGDB_CLIENT_ID,
-        "Authorization": f"Bearer {IGDB_ACCESS_TOKEN}"
-    }
-
-    body = """
-    fields name, cover.image_id, total_rating, total_rating_count;
+    
+    current_time = int(datetime.now().timestamp())
+    someday_time = int((datetime.now() - timedelta(days=30)).timestamp())
+    body = f"""
+    fields name, cover.image_id, total_rating, total_rating_count, first_release_date;
+    where cover != null 
+        & total_rating != null
+        & first_release_date >= {someday_time}
+        & first_release_date <= {current_time};
     sort total_rating_count desc;
-    where cover != null & total_rating != null;
     limit 6;
     """
-
-    response = requests.post(url, headers=headers, data=body)
+    response = requests.post(f"{url}/games", headers=headers, data=body)
     response.raise_for_status()
     games = response.json()
-
-    # Monta a URL da capa usando image_id
     for game in games:
-        if "cover" in game:
-            game["cover_url"] = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{game['cover']['image_id']}.jpg"
-
+        if game.get("cover"):
+            image_id = game["cover"]["image_id"]
+            game["cover_url"] = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{image_id}.jpg"
     return games
+
+def get_upcoming_games(days_ahead: int = 150, limit: int = 100) -> list:
+    now_ts = int(datetime.now().timestamp())
+    future_ts = int((datetime.now() + timedelta(days=days_ahead)).timestamp())
+
+    upcoming = []
+    seen_ids = set()
+    query = f"""
+        fields date,
+               game.id,
+               game.name,
+               game.cover.image_id;
+        where date > {now_ts}
+          & date <= {future_ts}
+          & game != null;
+        sort date asc;
+        limit {limit};
+        """
+    resp = requests.post(f"{url}/release_dates", headers=headers, data=query)
+    resp.raise_for_status()
+    entries = resp.json()
+        
+
+    for e in entries:
+        g = e.get("game") or {}
+        gid = g.get("id")
+        img = (g.get("cover") or {}).get("image_id")
+        if not gid or not img or gid in seen_ids:
+            continue
+        seen_ids.add(gid)
+
+        upcoming.append({
+                "id":           gid,
+                "name":         g["name"],
+                "release_date": datetime.fromtimestamp(e["date"]).strftime("%Y-%m-%d"),
+                "cover_url":    f"https://images.igdb.com/igdb/image/upload/t_cover_big/{img}.jpg"
+        })
+
+
+    return upcoming
+
+def get_anticipated_games(days_ahead: int = 365, limit: int = 100) -> list:
+    now_ts = int(datetime.now().timestamp())
+    future_ts = int((datetime.now() + timedelta(days=days_ahead)).timestamp())
+
+    body = f"""
+    fields name, hypes, cover.image_id, first_release_date;
+    where first_release_date > {now_ts}
+      & first_release_date <= {future_ts}
+      & hypes != null
+      & cover != null;
+    sort hypes desc;
+    limit {limit};
+    """
+
+    resp = requests.post(f"{url}/games", headers=headers, data=body)
+    resp.raise_for_status()
+    games = resp.json()
+
+    anticipated = []
+    for game in games:
+        image_id = game["cover"]["image_id"]
+        anticipated.append({
+            "id": game["id"],
+            "name": game["name"],
+            "hypes": game.get("hypes", 0),
+            "release_date": datetime.fromtimestamp(game["first_release_date"]).strftime("%Y-%m-%d"),
+            "cover_url": f"https://images.igdb.com/igdb/image/upload/t_cover_big/{image_id}.jpg"
+        })
+
+    return anticipated
+
