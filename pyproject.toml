@@ -1,0 +1,26 @@
+[project]
+name = "tracker-api"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "IamPedrin",email = "pedrin.luiz22@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+    "psnawp (>=3.0.0,<4.0.0)",
+    "fastapi (>=0.115.14,<0.116.0)",
+    "requests (>=2.32.4,<3.0.0)",
+    "sqlalchemy (>=2.0.41,<3.0.0)",
+    "uvicorn (>=0.35.0,<0.36.0)",
+    "python-dotenv (>=1.1.1,<2.0.0)",
+    "passlib[bcrypt] (>=1.7.4,<2.0.0)",
+    "psycopg2 (>=2.9.10,<3.0.0)",
+    "pydantic[email] (>=2.11.7,<3.0.0)",
+    "python-jose[cryptography] (>=3.5.0,<4.0.0)"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
