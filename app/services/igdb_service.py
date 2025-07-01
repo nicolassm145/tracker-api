@@ -101,3 +101,52 @@ def get_anticipated_games(days_ahead: int = 365, limit: int = 100) -> list:
 
     return anticipated
 
+def get_game_by_id(game_id: int) -> dict:
+    body = f"""
+    fields name, 
+           summary, 
+           cover.image_id, 
+           first_release_date, 
+           genres.name, 
+           platforms.name, 
+           involved_companies.company.name, 
+           screenshots.*, 
+           similar_games.name, 
+           similar_games.cover.image_id;
+    where id = {game_id};
+    """
+    
+    response = requests.post(f"{url}/games", headers=headers, data=body)
+    response.raise_for_status()
+    games = response.json()
+    
+    if not games:
+        return None
+    
+    game = games[0]
+    
+    # Processar imagens
+    if game.get("cover"):
+        image_id = game["cover"]["image_id"]
+        game["cover_url"] = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{image_id}.jpg"
+    
+    # Processar data de lançamento
+    if game.get("first_release_date"):
+        game["release_date"] = datetime.fromtimestamp(game["first_release_date"]).strftime("%Y-%m-%d")
+    
+    # Processar screenshots
+    for screenshot in game.get("screenshots", []):
+        screenshot["url"] = f"https://images.igdb.com/igdb/image/upload/t_1080p/{screenshot['image_id']}.jpg"
+
+    
+    # Processar empresas
+    game["companies"] = [comp["company"]["name"] 
+                         for comp in game.get("involved_companies", []) 
+                         if comp.get("company")]
+    
+    # Processar jogos similares
+    for similar in game.get("similar_games", []):
+        if similar.get("cover"):
+            similar["cover_url"] = f"https://images.igdb.com/igdb/image/upload/t_cover_small/{similar['cover']['image_id']}.jpg"
+    
+    return game
