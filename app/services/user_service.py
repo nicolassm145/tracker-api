@@ -31,3 +31,6 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     :return: O usuário encontrado ou None se não existir.
     """
     return db.query(User).filter(User.email == email).first()
+
+def get_user_by_login(login: str, db: Session):
+    return db.query(User).filter((User.email == login) | (User.username == login)).first()
