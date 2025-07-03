@@ -225,7 +225,7 @@ def get_steam_general_stats(steamid: str):
         }
     }
 
-@router.get("/rare-achievements/{steamid}")
+@router.get("/profile/rare-achievements/{steamid}")
 def get_rare_achievements(steamid: str, rarity_threshold: float = 10.0):
 
     # Obter jogos do usuário
