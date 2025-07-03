@@ -90,6 +90,24 @@ def getPlayerAchievements(steamid: str, appid: int) -> dict:
     except requests.RequestException:
         return {}
 
+def getGameAchievementSchema(appid: int) -> list:
+    """
+    Retorna o schema de conquistas de um jogo, incluindo ícones.
+    """
+    url = f"{BASE_URL}/ISteamUserStats/GetSchemaForGame/v2/"
+    params = {
+        "key": STEAM_API_KEY,
+        "appid": appid,
+        "l": "portuguese" 
+    }
+
+    try:
+        resp = requests.get(url, params=params)
+        resp.raise_for_status()
+        return resp.json().get("game", {}).get("availableGameStats", {}).get("achievements", [])
+    except requests.RequestException:
+        return []
+
 def getGlobalAchievementPercentagesForApp(appid: int) -> dict:
     """
     Obtém estatísticas globais de conquistas para um jogo
