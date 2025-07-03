@@ -34,3 +34,16 @@ def get_user_by_email(db: Session, email: str) -> User | None:
 
 def get_user_by_login(login: str, db: Session):
     return db.query(User).filter((User.email == login) | (User.username == login)).first()
+
+def update_steam_id(db: Session, user: User, steam_id: str) -> User:
+    """
+    Atualiza o campo steam_id do usuário.
+    :param db: Sessão do banco de dados.
+    :param user: Instância do usuário a ser atualizada.
+    :param steam_id: Novo Steam ID a ser salvo.
+    :return: O usuário atualizado.
+    """
+    user.steam_id = steam_id # type: ignore
+    db.commit()
+    db.refresh(user)
+    return user
