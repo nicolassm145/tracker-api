@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import HTTPException
 import requests
 from datetime import datetime, timedelta
@@ -150,3 +151,19 @@ def get_game_by_id(game_id: int) -> dict:
             similar["cover_url"] = f"https://images.igdb.com/igdb/image/upload/t_cover_small/{similar['cover']['image_id']}.jpg"
     
     return game
+
+def fetch_games_from_igdb(query: str) -> list:
+    body = f"""
+    fields id, name, cover.image_id;
+    search "{query}";
+    where cover != null;
+    limit 50;
+    """
+    response = requests.post(f"{url}/games", headers=headers, data=body)
+    response.raise_for_status()
+    games = response.json()
+    for game in games:
+        if game.get("cover"):
+            image_id = game["cover"]["image_id"]
+            game["cover_url"] = f"https://images.igdb.com/igdb/image/upload/t_cover_big/{image_id}.jpg"
+    return games
