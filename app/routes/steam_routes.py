@@ -11,7 +11,8 @@ from app.services.steam_service import (
     getPlayerStats,
     resolveVanityURL,
     getPlayerAchievements,
-    getGameAchievementSchema
+    getGameAchievementSchema,
+    getGlobalAchievementPercentagesForApp
 )
 
 router = APIRouter(prefix="/steam", tags=["Steam"])
@@ -104,6 +105,7 @@ def all_games_achievements(steamid: str):
 
     return Response(content=json.dumps(achievements_list, indent=2, ensure_ascii=False), media_type="application/json")
 
+# Atualiza as estatísticas gerais do usuário baseado nos dados do Steam.
 @router.post("/update-general-stats")
 def update_steam_general_stats(
     db: Session = Depends(get_db),
@@ -222,3 +224,80 @@ def get_steam_general_stats(steamid: str):
             "avg_platinums": avg_platinums
         }
     }
+
+@router.get("/rare-achievements/{steamid}")
+def get_rare_achievements(steamid: str, rarity_threshold: float = 10.0):
+
+    # Obter jogos do usuário
+    owned_games = getOwnedGames(steamid)
+    games = owned_games.get("games", [])
+    
+    all_rare_achievements = []
+    
+    for game in games:
+        appid = game.get("appid")
+        name = game.get("name", "Desconhecido")
+        
+        if appid:
+            # Conquistas do jogador
+            player_achievements = getPlayerAchievements(steamid, appid)
+            player_achs = player_achievements.get("achievements", [])
+            
+            # Schema de conquistas do jogo (para obter ícones)
+            game_schema = getGameAchievementSchema(appid)
+            
+            # Porcentagem global de cada conquista
+            global_percentages = getGlobalAchievementPercentagesForApp(appid)
+            global_achs = global_percentages.get("achievements", [])
+            
+            # Filtrar conquistas raras
+            game_rare_achievements = []
+            for achievement in player_achs:
+                if achievement.get("achieved") == 1:  # Se o jogador tem
+                    apiname = achievement.get("apiname")
+                    
+                    # Buscar porcentagem global
+                    for global_ach in global_achs:
+                        if global_ach.get("name") == apiname:
+                            percentage = global_ach.get("percent", 100.0)
+                            if float(percentage) < float(rarity_threshold):
+                                # Buscar ícones no schema do jogo
+                                icon_url = None
+                                icongray_url = None
+                                for schema_ach in game_schema:
+                                    if schema_ach.get("name") == apiname:
+                                        icon_url = schema_ach.get("icon")
+                                        icongray_url = schema_ach.get("icongray")
+                                        break
+                                
+                                game_rare_achievements.append({
+                                    "apiname": apiname,
+                                    "name": achievement.get("name"),
+                                    "description": achievement.get("description"),
+                                    "icon": icon_url,
+                                    "icongray": icongray_url,
+                                    "unlocktime": achievement.get("unlocktime"),
+                                    "global_percentage": percentage
+                                })
+                            break
+            
+            if game_rare_achievements:
+                all_rare_achievements.append({
+                    "appid": appid,
+                    "game_name": name,
+                    "rare_achievements": game_rare_achievements,
+                    "total_rare": len(game_rare_achievements)
+                })
+    
+    response_data = {
+        "steam_id": steamid,
+        "rarity_threshold": f"< {rarity_threshold}%",
+        "total_games_with_rare": len(all_rare_achievements),
+        "total_rare_achievements": sum(game["total_rare"] for game in all_rare_achievements),
+        "games": all_rare_achievements
+    }
+    
+    return Response(
+        content=json.dumps(response_data, indent=2, ensure_ascii=False), 
+        media_type="application/json"
+    )
