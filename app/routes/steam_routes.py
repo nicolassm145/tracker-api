@@ -10,7 +10,9 @@ from app.services.steam_service import (
     getOwnedGames, 
     getPlayerProfileInfo, 
     getPlayerStats,
-    resolveVanityURL
+    resolveVanityURL,
+    getPlayerAchievements,
+    getGameAchievementSchema
 )
 
 router = APIRouter(prefix="/steam", tags=["Steam"])
@@ -73,3 +75,47 @@ def save_steamid_from_vanity(
         raise HTTPException(status_code=404, detail="Vanity URL não encontrada")
     update_steam_id(db, current_user, steamid)
     return {"steamid": steamid}
+
+@router.get("/profile/achievements/{steamid}")
+def all_games_achievements(steamid: str):
+    owned_games = getOwnedGames(steamid)
+    games = owned_games.get("games", [])
+    achievements_list = []
+
+    for game in games:
+        appid = game.get("appid")
+        name = game.get("name", "Desconhecido")
+
+        if appid:
+            # Pega conquistas do jogador
+            player_achievements = getPlayerAchievements(steamid, appid).get("achievements", [])
+            # Pega o schema com os ícones
+            schema_achievements = getGameAchievementSchema(appid)
+
+            # Cria um dicionário para mapear por API name
+            schema_map = {a["name"]: a for a in schema_achievements}
+
+            # Enriquecer cada conquista com ícone
+            enriched_achievements = []
+            for ach in player_achievements:
+                schema = schema_map.get(ach.get("apiname"))
+                enriched_achievements.append({
+                    "name": ach.get("name"),
+                    "apiname": ach.get("apiname"),
+                    "achieved": ach.get("achieved"),
+                    "unlocktime": ach.get("unlocktime"),
+                    "icon": schema.get("icon") if schema else None,
+                    "icongray": schema.get("icongray") if schema else None,
+                    "description": schema.get("description") if schema else "",
+                })
+
+            achievements_list.append({
+                "appid": appid,
+                "name": name,
+                "achievements": enriched_achievements,
+                "total_achievements": len(enriched_achievements),
+                "achieved_achievements": len([a for a in enriched_achievements if a["achieved"] == 1])
+            })
+
+    return Response(content=json.dumps(achievements_list, indent=2, ensure_ascii=False), media_type="application/json")
+
