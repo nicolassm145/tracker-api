@@ -34,14 +34,22 @@ def save_xboxid(xboxid: str, db: Session = Depends(get_db), current_user: User =
 @router.get("/profile/achievements/{xuid}")
 def xbox_achievements(xuid: str):
     achievements = getPlayerAchievements(xuid)
-    if not achievements:
+    if not achievements or "titles" not in achievements:
         raise HTTPException(status_code=404, detail="Conquistas não encontradas")
     
-    # Retornar a resposta completa para debug
-    return Response(
-        content=json.dumps(achievements, indent=2, ensure_ascii=False),
-        media_type="application/json"
-    )
+    jogos_filtrados = []
+    for jogo in achievements["titles"]:
+        jogos_filtrados.append({
+            "nome": jogo.get("name"),
+            "titleId": jogo.get("titleId"),
+            "ultimaVezJogado": jogo.get("titleHistory", {}).get("lastTimePlayed"),
+            "conquistas": jogo.get("achievement", {}).get("currentAchievements"),
+            "totalConquistas": jogo.get("achievement", {}).get("totalAchievements"),
+            "icone": jogo.get("displayImage"),
+            "horasJogadas": None,  # Não disponível no retorno
+            "horasTotais": None    # Não disponível no retorno
+        })
+    return {"jogos": jogos_filtrados}
 
 # Retorna as conquistas de um jogo específico do usuário Xbox
 @router.get("/profile/achievements/game/{xuid}/{game_id}")
