@@ -72,3 +72,37 @@ def xbox_games_with_full_achievements(
     if not jogos:
         raise HTTPException(status_code=404, detail="Jogos ou conquistas não encontradas")
     return {"jogos": jogos}
+
+@router.get("/profile/achievements/all/{xuid}")
+def xbox_all_achievements(
+    xuid: str,
+    page: int = Query(1, ge=1),
+    limit: int = Query(5, ge=1, le=50)
+):
+    achievements = getPlayerAchievements(xuid)
+    if not achievements or "titles" not in achievements:
+        raise HTTPException(status_code=404, detail="Conquistas não encontradas")
+
+    jogos_filtrados = []
+    for jogo in achievements["titles"]:
+        devices = jogo.get("devices", [])
+        if is_valid_platform_game(devices):
+            jogos_filtrados.append(jogo)
+    start = (page - 1) * limit
+    end = start + limit
+    jogos_paginados = jogos_filtrados[start:end]
+    jogos_resultado = []
+    for jogo in jogos_paginados:
+        title_id = jogo.get("titleId")
+        if not title_id:
+            continue
+        conquistas_data = getPlayerAchievementsByGame(xuid, title_id)
+        achievements_list = conquistas_data.get("achievements", [])
+        jogos_resultado.append({
+            "name": jogo.get("name"),
+            "titleId": title_id,
+            "displayImage": jogo.get("displayImage"),
+            "lastTimePlayed": jogo.get("titleHistory", {}).get("lastTimePlayed"),
+            "achievements": achievements_list,
+        })
+    return {"jogos": jogos_resultado}
