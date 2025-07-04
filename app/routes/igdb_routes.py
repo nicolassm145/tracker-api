@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 import requests
-from app.services.igdb_service import get_game_by_id, get_trending_games, get_upcoming_games, get_anticipated_games
+from app.services.igdb_service import get_game_by_id, get_trending_games, get_upcoming_games, get_anticipated_games, fetch_games_from_igdb
 
 router = APIRouter(prefix="/igdb", tags=["IGDB"])
 
@@ -44,4 +44,10 @@ def get_game_details(game_id: int):
     except Exception as err:
         raise HTTPException(status_code=500, detail=f"Internal error: {err}")
 
-
+@router.get("/search")
+def search_games(q: str = Query(..., min_length=3)):
+    try:
+        games = fetch_games_from_igdb(q)
+        return games
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
