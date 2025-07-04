@@ -56,3 +56,32 @@ def is_valid_platform_game(devices: list) -> bool:
     
     # Verifica se pelo menos uma das plataformas válidas está presente
     return any(platform in devices for platform in valid_platforms)
+
+
+def getPlayerGamesWithFullAchievements(xuid: str, page: int = 1, limit: int = 5) -> list:
+    jogos_data = getPlayerAchievements(xuid)
+    if not jogos_data or "titles" not in jogos_data:
+        return []
+
+    start = (page - 1) * limit
+    end = start + limit
+    jogos_paginados = jogos_data["titles"][start:end]
+
+    jogos_resultado = []
+    for jogo in jogos_paginados:
+        title_id = jogo.get("titleId")
+        if not title_id:
+            continue
+
+        conquistas_data = getPlayerAchievementsByGame(xuid, title_id)
+        achievements = conquistas_data.get("achievements", [])
+
+        jogos_resultado.append({
+            "name": jogo.get("name"),
+            "titleId": title_id,
+            "displayImage": jogo.get("displayImage"),
+            "lastTimePlayed": jogo.get("titleHistory", {}).get("lastTimePlayed"),
+            "achievements": achievements,
+        })
+
+    return jogos_resultado
