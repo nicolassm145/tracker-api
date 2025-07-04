@@ -29,3 +29,16 @@ def getPlayerAchievements(xuid: str) -> dict:
         return data
     except requests.RequestException as e:
         return {}
+
+def getPlayerAchievementsByGame(xuid: str, game_id: str) -> dict:
+    url = f"{BASE_URL}/achievements/player/{xuid}/{game_id}"
+    headers = {
+        "X-Authorization": XBOX_API_KEY
+    }
+    try:
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()
+        data = resp.json()
+        return data
+    except requests.RequestException as e:
+        return {}

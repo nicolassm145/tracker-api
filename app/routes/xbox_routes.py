@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 import json
-from app.services.xbox_service import getPlayerXUID, getPlayerAchievements
+from app.services.xbox_service import getPlayerXUID, getPlayerAchievements, getPlayerAchievementsByGame
 from app.services.user_service import update_xbox_id
 from app.routes.user_routes import get_current_user, get_db
 from app.models.user_model import User
@@ -42,3 +42,11 @@ def xbox_achievements(xuid: str):
         content=json.dumps(achievements, indent=2, ensure_ascii=False),
         media_type="application/json"
     )
+
+# Retorna as conquistas de um jogo específico do usuário Xbox
+@router.get("/profile/achievements/game/{xuid}/{game_id}")
+def xbox_achievements_by_game(xuid: str, game_id: str):
+    achievements = getPlayerAchievementsByGame(xuid, game_id)
+    if not achievements:
+        raise HTTPException(status_code=404, detail="Conquistas não encontradas")
+    return {"achievements": achievements}
