@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 import json
-from app.services.xbox_service import getPlayerXUID, getPlayerAchievements, getPlayerAchievementsByGame
+from app.services.xbox_service import getPlayerXUID, getPlayerAchievements, getPlayerAchievementsByGame, is_valid_platform_game
 from app.services.user_service import update_xbox_id
 from app.routes.user_routes import get_current_user, get_db
 from app.models.user_model import User
@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 
 router = APIRouter(prefix="/xbox", tags=["Xbox"])
+
+
 
 # Retorna apenas o XUID do usuário Xbox
 @router.get("/profile/xuid/{gamertag}")
@@ -30,7 +32,7 @@ def save_xboxid(xboxid: str, db: Session = Depends(get_db), current_user: User =
     update_xbox_id(db, current_user, xboxid)
     return {"xboxid": xboxid}
 
-# Retorna as conquistas do usuário Xbox
+# Retorna as conquistas do usuário Xbox (apenas PC, XboxSeries e XboxOne)
 @router.get("/profile/achievements/{xuid}")
 def xbox_achievements(xuid: str):
     achievements = getPlayerAchievements(xuid)
@@ -39,16 +41,26 @@ def xbox_achievements(xuid: str):
     
     jogos_filtrados = []
     for jogo in achievements["titles"]:
-        jogos_filtrados.append({
-            "nome": jogo.get("name"),
-            "titleId": jogo.get("titleId"),
-            "ultimaVezJogado": jogo.get("titleHistory", {}).get("lastTimePlayed"),
-            "conquistas": jogo.get("achievement", {}).get("currentAchievements"),
-            "totalConquistas": jogo.get("achievement", {}).get("totalAchievements"),
-            "icone": jogo.get("displayImage"),
-            "horasJogadas": None,  # Não disponível no retorno
-            "horasTotais": None    # Não disponível no retorno
-        })
+        devices = jogo.get("devices", [])
+        
+        # Filtra apenas jogos que tenham PC, XboxSeries ou XboxOne
+        if is_valid_platform_game(devices):
+            jogos_filtrados.append({
+                "titleId": jogo.get("titleId"),
+                "pfn": jogo.get("pfn"),
+                "bingId": jogo.get("bingId"),
+                "windowsPhoneProductId": jogo.get("windowsPhoneProductId"),
+                "name": jogo.get("name"),
+                "type": jogo.get("type"),
+                "devices": devices,
+                "displayImage": jogo.get("displayImage"),
+                "mediaItemType": jogo.get("mediaItemType"),
+                "modernTitleId": jogo.get("modernTitleId"),
+                "isBundle": jogo.get("isBundle"),
+                "achievement": jogo.get("achievement", {}),
+                "titleHistory": jogo.get("titleHistory", {})
+            })
+    
     return {"jogos": jogos_filtrados}
 
 # Retorna as conquistas de um jogo específico do usuário Xbox

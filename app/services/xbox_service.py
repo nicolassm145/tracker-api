@@ -42,3 +42,17 @@ def getPlayerAchievementsByGame(xuid: str, game_id: str) -> dict:
         return data
     except requests.RequestException as e:
         return {}
+
+
+def is_valid_platform_game(devices: list) -> bool:
+    """
+    Filtra jogos que tenham as plataformas PC, XboxSeries e XboxOne.
+    """
+    if not devices:
+        return False
+    
+    # Lista de plataformas válidas
+    valid_platforms = ["PC", "XboxSeries", "XboxOne"]
+    
+    # Verifica se pelo menos uma das plataformas válidas está presente
+    return any(platform in devices for platform in valid_platforms)
