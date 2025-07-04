@@ -46,19 +46,10 @@ def xbox_achievements(xuid: str):
         # Filtra apenas jogos que tenham PC, XboxSeries ou XboxOne
         if is_valid_platform_game(devices):
             jogos_filtrados.append({
-                "titleId": jogo.get("titleId"),
-                "pfn": jogo.get("pfn"),
-                "bingId": jogo.get("bingId"),
-                "windowsPhoneProductId": jogo.get("windowsPhoneProductId"),
                 "name": jogo.get("name"),
-                "type": jogo.get("type"),
-                "devices": devices,
+                "titleId": jogo.get("titleId"),
                 "displayImage": jogo.get("displayImage"),
-                "mediaItemType": jogo.get("mediaItemType"),
-                "modernTitleId": jogo.get("modernTitleId"),
-                "isBundle": jogo.get("isBundle"),
-                "achievement": jogo.get("achievement", {}),
-                "titleHistory": jogo.get("titleHistory", {})
+                "lastTimePlayed": jogo.get("titleHistory", {}).get("lastTimePlayed")
             })
     
     return {"jogos": jogos_filtrados}
