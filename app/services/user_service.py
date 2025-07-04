@@ -33,6 +33,12 @@ def update_steam_id(db: Session, user: User, steam_id: str) -> User:
     db.refresh(user)
     return user
 
+def update_xbox_id(db: Session, user: User, xbox_id: str) -> User:
+    user.xbox_id = xbox_id # type: ignore
+    db.commit()
+    db.refresh(user)
+    return user
+
 def create_general_stats(db: Session, user: User) -> GeneralStats:
     stats = GeneralStats()
     db.add(stats)
