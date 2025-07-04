@@ -11,7 +11,7 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://achievement-tracker-shar.onrender.com/"],
+    allow_origins=["https://achievement-tracker-shar.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
