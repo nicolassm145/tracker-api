@@ -14,7 +14,7 @@ class GeneralStatsBase(BaseModel):
     avg_platinums: int = 0
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserOut(BaseModel):
     id: int
@@ -26,7 +26,7 @@ class UserOut(BaseModel):
     general_stats: GeneralStatsBase | None = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserLogin(BaseModel):
     login: str
