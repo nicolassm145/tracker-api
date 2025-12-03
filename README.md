@@ -1,6 +1,6 @@
 # Tracker API
 
-API REST para rastreamento de jogos e conquistas entre múltiplas plataformas (Steam, PlayStation, Xbox e IGDB).
+API REST para rastreamento de jogos e conquistas entre múltiplas plataformas (Steam, PlayStation, Xbox e IGDB). 
 
 ## Sobre o Projeto
 
